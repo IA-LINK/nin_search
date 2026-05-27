@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'screens/home/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,10 +12,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'VTU App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const HomeScreen(),
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const Scaffold(body: Center(child: Text('VTU App'))),
     );
   }
 }
