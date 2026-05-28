@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'VTU App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const Scaffold(body: Center(child: Text('VTU App'))),
+      home: const Scaffold(body: Center(child: Text('Welcome to NIN Searching button'))),
     );
   }
 }
