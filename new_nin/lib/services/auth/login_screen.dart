@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../services/auth/auth_service.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,16 +25,20 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+
             TextField(
               controller: email,
               decoration: const InputDecoration(labelText: "Email"),
             ),
+
             TextField(
               controller: password,
               decoration: const InputDecoration(labelText: "Password"),
               obscureText: true,
             ),
+
             const SizedBox(height: 20),
+
             ElevatedButton(
               onPressed: () async {
                 String? error;
@@ -46,14 +49,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   error = await auth.register(email.text, password.text);
                 }
 
-                if (error != null && context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(error)));
+                if (error != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(error)),
+                  );
                 }
               },
               child: Text(isLogin ? "Login" : "Register"),
             ),
+
             TextButton(
               onPressed: () {
                 setState(() {
@@ -61,7 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 });
               },
               child: Text(
-                isLogin ? "Create account" : "Already have an account? Login",
+                isLogin
+                    ? "Create account"
+                    : "Already have an account? Login",
               ),
             ),
           ],
