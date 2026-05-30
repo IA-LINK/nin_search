@@ -1,41 +1,41 @@
-import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class AppUser {
-  const AppUser({required this.email});
+class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  final String email;
-}
-
-class AuthService extends ChangeNotifier {
-  AppUser? _user;
-
-  AppUser? get user => _user;
-
-  // 🔐 REGISTER
-  Future<String?> register(String email, String password) async {
+  // REGISTER
+  Future<User?> register(String email, String password) async {
     try {
-      _user = AppUser(email: email);
-      notifyListeners();
-      return null;
+      UserCredential result = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result.user;
     } catch (e) {
-      return e.toString();
+      print("Register Error: $e");
+      return null;
     }
   }
 
-  // 🔐 LOGIN
-  Future<String?> login(String email, String password) async {
+  // LOGIN
+  Future<User?> login(String email, String password) async {
     try {
-      _user = AppUser(email: email);
-      notifyListeners();
-      return null;
+      UserCredential result = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return result.user;
     } catch (e) {
-      return e.toString();
+      print("Login Error: $e");
+      return null;
     }
   }
 
-  // 🚪 LOGOUT
+  // LOGOUT
   Future<void> logout() async {
-    _user = null;
-    notifyListeners();
+    await _auth.signOut();
   }
+
+  // USER STATE
+  Stream<User?> get user => _auth.authStateChanges();
 }

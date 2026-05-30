@@ -1,34 +1,29 @@
 import 'package:flutter/material.dart';
-import 'register_screen.dart';
 import '../../services/auth/auth_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final AuthService _auth = AuthService();
 
-  bool loading = false;
-
-  void loginUser() async {
-    setState(() => loading = true);
-
-    final user = await _auth.login(
+  void registerUser() async {
+    final user = await _auth.register(
       emailController.text.trim(),
       passwordController.text.trim(),
     );
 
-    setState(() => loading = false);
-
-    if (user == null) {
+    if (user != null) {
+      Navigator.pop(context);
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login Failed")),
+        const SnackBar(content: Text("Registration Failed")),
       );
     }
   }
@@ -42,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
 
-            const Text("Login", style: TextStyle(fontSize: 28)),
+            const Text("Register", style: TextStyle(fontSize: 28)),
 
             TextField(
               controller: emailController,
@@ -58,22 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
 
             ElevatedButton(
-              onPressed: loading ? null : loginUser,
-              child: loading
-                  ? const CircularProgressIndicator()
-                  : const Text("Login"),
-            ),
-
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const RegisterScreen(),
-                  ),
-                );
-              },
-              child: const Text("Create Account"),
+              onPressed: registerUser,
+              child: const Text("Register"),
             )
           ],
         ),
