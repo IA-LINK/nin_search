@@ -2,13 +2,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class WalletService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _db = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
 
-  // 🔵 CREATE USER WALLET IF NOT EXISTS
-  Future<void> createWalletIfNotExists() async {
-    final uid = _auth.currentUser!.uid;
+  String get uid => _auth.currentUser!.uid;
 
+  /// 🔥 REAL-TIME BALANCE STREAM
+  Stream<double> balanceStream() {
+    return _db.collection('users').doc(uid).snapshots().map((doc) {
+      return (doc.data()?['balance'] ?? 0).toDouble();
+    });
+  }
+
+  /// 🔥 CREATE WALLET IF NOT EXISTS
+  Future<void> createWallet() async {
     final doc = await _db.collection('users').doc(uid).get();
 
     if (!doc.exists) {
@@ -20,48 +27,33 @@ class WalletService {
     }
   }
 
-  // 🔵 GET BALANCE STREAM (REAL TIME)
-  Stream<double> getBalanceStream() {
-    final uid = _auth.currentUser!.uid;
-
-    return _db.collection('users').doc(uid).snapshots().map((doc) {
-      return (doc['balance'] ?? 0).toDouble();
-    });
-  }
-
-  // 🔵 ADD MONEY
-  Future<void> creditWallet(double amount) async {
-    final uid = _auth.currentUser!.uid;
-
+  /// 🔥 CREDIT WALLET
+  Future<void> credit(double amount) async {
     final ref = _db.collection('users').doc(uid);
 
-    await _db.runTransaction((transaction) async {
-      final snapshot = await transaction.get(ref);
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final current = (snap['balance'] ?? 0).toDouble();
 
-      double current = (snapshot['balance'] ?? 0).toDouble();
-
-      transaction.update(ref, {
+      tx.update(ref, {
         'balance': current + amount,
       });
     });
   }
 
-  // 🔵 DEDUCT MONEY
-  Future<void> debitWallet(double amount) async {
-    final uid = _auth.currentUser!.uid;
-
+  /// 🔥 DEBIT WALLET
+  Future<void> debit(double amount) async {
     final ref = _db.collection('users').doc(uid);
 
-    await _db.runTransaction((transaction) async {
-      final snapshot = await transaction.get(ref);
-
-      double current = (snapshot['balance'] ?? 0).toDouble();
+    await _db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      final current = (snap['balance'] ?? 0).toDouble();
 
       if (current < amount) {
         throw Exception("Insufficient balance");
       }
 
-      transaction.update(ref, {
+      tx.update(ref, {
         'balance': current - amount,
       });
     });

@@ -26,7 +26,7 @@ class DashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
 
-          // ================= WALLET =================
+          // ================= WALLET (LIVE FIRESTORE) =================
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -37,19 +37,55 @@ class DashboardScreen extends StatelessWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text("Wallet Balance", style: TextStyle(color: Colors.grey)),
-                SizedBox(height: 10),
-                Text(
-                  "₦25,000.00",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+              children: [
+
+                const Text(
+                  "Wallet Balance",
+                  style: TextStyle(color: Colors.grey),
                 ),
-                SizedBox(height: 10),
-                Text("Active Account", style: TextStyle(color: Colors.green)),
+
+                const SizedBox(height: 10),
+
+                StreamBuilder<double>(
+                  stream: WalletService().balanceStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Text(
+                        "₦0.00",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return const Text(
+                        "Error loading balance",
+                        style: TextStyle(color: Colors.red),
+                      );
+                    }
+
+                    final balance = snapshot.data ?? 0;
+
+                    return Text(
+                      "₦${balance.toStringAsFixed(2)}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 10),
+
+                const Text(
+                  "Active Account",
+                  style: TextStyle(color: Colors.green),
+                ),
               ],
             ),
           ),
@@ -63,7 +99,6 @@ class DashboardScreen extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // ================= FIXED GRID =================
           GridView.count(
             crossAxisCount: 4,
             shrinkWrap: true,
