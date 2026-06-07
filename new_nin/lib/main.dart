@@ -8,6 +8,8 @@ import 'services/auth/auth_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 
+'/fund-wallet': (context) => const FundWalletScreen(),
+
 bool get _hasFirebaseConfig {
   return false;
 }
