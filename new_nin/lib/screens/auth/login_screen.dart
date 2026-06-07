@@ -17,6 +17,13 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLogin = true;
 
   @override
+  void dispose() {
+    email.dispose();
+    password.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final auth = context.read<AuthService>();
 
@@ -38,18 +45,21 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                String? error;
+                final user = isLogin
+                    ? await auth.login(email.text.trim(), password.text.trim())
+                    : await auth.register(
+                        email.text.trim(),
+                        password.text.trim(),
+                      );
 
-                if (isLogin) {
-                  error = await auth.login(email.text, password.text);
-                } else {
-                  error = await auth.register(email.text, password.text);
-                }
-
-                if (error != null && context.mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(error)));
+                if (user == null && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isLogin ? 'Login failed' : 'Registration failed',
+                      ),
+                    ),
+                  );
                 }
               },
               child: Text(isLogin ? "Login" : "Register"),

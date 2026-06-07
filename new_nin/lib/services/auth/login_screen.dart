@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'register_screen.dart';
+import '../../screens/auth/register_screen.dart';
 import '../../services/auth/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,12 +24,14 @@ class _LoginScreenState extends State<LoginScreen> {
       passwordController.text.trim(),
     );
 
+    if (!mounted) return;
+
     setState(() => loading = false);
 
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login Failed")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Login Failed")));
     }
   }
 
@@ -41,7 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-
             const Text("Login", style: TextStyle(fontSize: 28)),
 
             TextField(
@@ -68,13 +69,11 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const RegisterScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
                 );
               },
               child: const Text("Create Account"),
-            )
+            ),
           ],
         ),
       ),

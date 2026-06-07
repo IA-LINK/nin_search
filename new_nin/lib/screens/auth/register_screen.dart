@@ -19,6 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       passwordController.text.trim(),
     );
 
+    if (!mounted) return;
+
     if (user != null) {
       Navigator.pop(context);
     } else {

@@ -2,38 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/auth/auth_service.dart';
+import '../../widgets/sidebar.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authService = context.read<AuthService>();
+
     return Scaffold(
-      // 🔵 NAVBAR
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0,
-        title: const Text("VTU Dashboard"),
-        iconTheme: const IconThemeData(
-          color: Color.fromARGB(255, 175, 100, 100),
-        ),
+        title: const Text('VTU Dashboard'),
+        iconTheme: const IconThemeData(color: Color(0xFFAF6464)),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthService>().logout();
+            onPressed: () async {
+              await authService.signOut();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/login');
+              }
             },
           ),
         ],
       ),
-
-      // 🔵 BODY
+      drawer: const Sidebar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔍 SEARCH BOX
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -42,33 +44,32 @@ class HomeScreen extends StatelessWidget {
               ),
               child: const TextField(
                 decoration: InputDecoration(
-                  hintText: "Search NIN / Services...",
+                  hintText: 'Search NIN / Services...',
                   border: InputBorder.none,
                   icon: Icon(Icons.search),
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Text(
-              "Quick Actions",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              'Quick Actions',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-
             const SizedBox(height: 10),
-
-            // 🔵 GRID MENU
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                children: [
-                  _buildCard(Icons.phone_android, "Buy Airtime"),
-                  _buildCard(Icons.wifi, "Buy Data"),
-                  _buildCard(Icons.person, "Check NIN"),
-                  _buildCard(Icons.receipt, "Bills Payment"),
+                children: const [
+                  _ActionCard(icon: Icons.phone_android, title: 'Buy Airtime'),
+                  _ActionCard(icon: Icons.wifi, title: 'Buy Data'),
+                  _ActionCard(icon: Icons.person, title: 'Check NIN'),
+                  _ActionCard(icon: Icons.receipt, title: 'Bills Payment'),
                 ],
               ),
             ),
@@ -77,9 +78,16 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  // 🔵 CARD WIDGET
-  static Widget _buildCard(IconData icon, String title) {
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({required this.icon, required this.title});
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.black,
