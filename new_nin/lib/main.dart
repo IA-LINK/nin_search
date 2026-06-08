@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import 'services/auth/auth_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
+import 'screens/history/history_screen.dart';
 
-'/fund-wallet': (context) => const FundWalletScreen(),
+
+
 
 bool get _hasFirebaseConfig {
   return false;
@@ -37,6 +39,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const DashboardScreen(),
+        '/fund-wallet': (context) => const FundWalletScreen(),
+        '/history': (context) => const HistoryScreen(),
       },
     );
 

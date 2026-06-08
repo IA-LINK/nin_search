@@ -7,14 +7,16 @@ class WalletService {
 
   String? get uid => _auth.currentUser?.uid;
 
-  /// 🔥 CHECK USER SAFETY
+  // ================= USER CHECK =================
+
   void _requireUser() {
     if (uid == null) {
       throw Exception("User not logged in");
     }
   }
 
-  /// 🔥 REAL-TIME BALANCE STREAM
+  // ================= WALLET =================
+
   Stream<double> balanceStream() {
     _requireUser();
 
@@ -23,11 +25,20 @@ class WalletService {
 
       if (data == null) return 0.0;
 
-      return (data['balance'] ?? 0).toDouble();
+      final balance = data['balance'];
+
+      if (balance is int) {
+        return balance.toDouble();
+      }
+
+      if (balance is double) {
+        return balance;
+      }
+
+      return 0.0;
     });
   }
 
-  /// 🔥 CREATE WALLET IF NOT EXISTS
   Future<void> createWallet() async {
     _requireUser();
 
@@ -43,7 +54,6 @@ class WalletService {
     }
   }
 
-  /// 🔥 CREDIT WALLET
   Future<void> credit(double amount) async {
     _requireUser();
 
@@ -52,8 +62,12 @@ class WalletService {
     await _db.runTransaction((tx) async {
       final snap = await tx.get(ref);
 
-      final data = snap.data();
-      final current = (data?['balance'] ?? 0).toDouble();
+      if (!snap.exists) {
+        throw Exception("Wallet does not exist");
+      }
+
+      final data = snap.data()!;
+      final current = (data['balance'] ?? 0).toDouble();
 
       tx.update(ref, {
         'balance': current + amount,
@@ -61,7 +75,6 @@ class WalletService {
     });
   }
 
-  /// 🔥 DEBIT WALLET
   Future<void> debit(double amount) async {
     _requireUser();
 
@@ -70,8 +83,12 @@ class WalletService {
     await _db.runTransaction((tx) async {
       final snap = await tx.get(ref);
 
-      final data = snap.data();
-      final current = (data?['balance'] ?? 0).toDouble();
+      if (!snap.exists) {
+        throw Exception("Wallet does not exist");
+      }
+
+      final data = snap.data()!;
+      final current = (data['balance'] ?? 0).toDouble();
 
       if (current < amount) {
         throw Exception("Insufficient balance");
@@ -81,5 +98,33 @@ class WalletService {
         'balance': current - amount,
       });
     });
+  }
+
+  // ================= TRANSACTIONS =================
+
+  Future<void> saveTransaction({
+    required String type,
+    required double amount,
+    required String details,
+  }) async {
+    _requireUser();
+
+    await _db.collection('transactions').add({
+      'uid': uid,
+      'type': type,
+      'amount': amount,
+      'details': details,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> transactionStream() {
+    _requireUser();
+
+    return _db
+        .collection('transactions')
+        .where('uid', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
   }
 }
