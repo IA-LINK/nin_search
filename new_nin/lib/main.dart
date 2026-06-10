@@ -50,6 +50,9 @@ class MyApp extends StatelessWidget {
           '/history': (context) => const HistoryScreen(),
           '/data': (context) => const DataScreen(),
           '/fund-wallet': (context) => const FundWalletScreen(),
+          '/admin-dashboard': (_) => const AdminDashboard(),
+          '/admin-users': (_) => const UsersScreen(),
+          '/admin-transactions': (_) => const TransactionsScreen(),
         },
       ),
     );
