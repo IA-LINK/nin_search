@@ -34,4 +34,21 @@ class AdminService {
       'status': 'active',
     });
   }
+  Future<void> fundUserWallet(
+  String uid,
+  double amount,
+) async {
+  final userRef = _db.collection('users').doc(uid);
+
+  await _db.runTransaction((tx) async {
+    final snap = await tx.get(userRef);
+
+    final balance =
+        (snap.data()?['balance'] ?? 0).toDouble();
+
+    tx.update(userRef, {
+      'balance': balance + amount,
+    });
+  });
+}
 }
