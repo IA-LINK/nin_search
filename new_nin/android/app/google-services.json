@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "581965729031",
+    "project_id": "food-ecommerce-9dc53",
+    "storage_bucket": "food-ecommerce-9dc53.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:581965729031:android:bd72e0edc19e8a3a2309a2",
+        "android_client_info": {
+          "package_name": "com.codeagain.food_ecommerce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-xmQ2ybi1rMYLMu_po-KyYBRhS6L-D2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:581965729031:android:8efe2596f562e66b2309a2",
+        "android_client_info": {
+          "package_name": "com.example.new_nin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-xmQ2ybi1rMYLMu_po-KyYBRhS6L-D2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

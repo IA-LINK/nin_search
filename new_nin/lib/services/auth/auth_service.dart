@@ -1,55 +1,45 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 class AuthService {
-  FirebaseAuth get _firebaseAuth {
-    if (Firebase.apps.isEmpty) {
-      throw StateError(
-        'Firebase is not initialized. Call Firebase.initializeApp or configure Firebase in main.dart',
-      );
-    }
-
-    return FirebaseAuth.instance;
-  }
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   Future<User?> login(String email, String password) async {
-    final firebaseAuth = _firebaseAuth;
-
     try {
-      final credential = await firebaseAuth.signInWithEmailAndPassword(
+      final credential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       return credential.user;
-    } on FirebaseAuthException {
+    } on FirebaseAuthException catch (e) {
+      print("Login error: ${e.message}");
       return null;
-    } on StateError {
-      rethrow;
+    } catch (e) {
+      print("Unknown login error: $e");
+      return null;
     }
   }
 
   Future<User?> register(String email, String password) async {
-    final firebaseAuth = _firebaseAuth;
-
     try {
-      final credential = await firebaseAuth.createUserWithEmailAndPassword(
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       return credential.user;
-    } on FirebaseAuthException {
+    } on FirebaseAuthException catch (e) {
+      print("Register error: ${e.message}");
       return null;
-    } on StateError {
-      rethrow;
+    } catch (e) {
+      print("Unknown register error: $e");
+      return null;
     }
   }
 
-  Future<void> signOut() {
-    final firebaseAuth = _firebaseAuth;
-    return firebaseAuth.signOut();
+  Future<void> signOut() async {
+    await _firebaseAuth.signOut();
   }
 
-  Future<void> logout() {
-    return signOut();
+  Future<void> logout() async {
+    await signOut();
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../widgets/sidebar.dart';
 import '../../services/wallet_service.dart';
 
@@ -7,9 +9,10 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final walletService = Provider.of<WalletService>(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B0B),
-
       drawer: const Sidebar(),
 
       appBar: AppBar(
@@ -26,7 +29,7 @@ class DashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
 
-          // ================= WALLET (LIVE FIRESTORE) =================
+          // ================= WALLET =================
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -47,27 +50,9 @@ class DashboardScreen extends StatelessWidget {
                 const SizedBox(height: 10),
 
                 StreamBuilder<double>(
-                  stream: WalletService().balanceStream(),
+                  stream: walletService.balanceStream(),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Text(
-                        "₦0.00",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      return const Text(
-                        "Error loading balance",
-                        style: TextStyle(color: Colors.red),
-                      );
-                    }
-
-                    final balance = snapshot.data ?? 0;
+                    final balance = snapshot.data ?? 0.0;
 
                     return Text(
                       "₦${balance.toStringAsFixed(2)}",
@@ -120,6 +105,7 @@ class DashboardScreen extends StatelessWidget {
 
           const SizedBox(height: 10),
 
+          // TODO: Replace with Firebase Stream later
           _buildTransaction("Airtime Purchase", "-₦500"),
           _buildTransaction("Data Bundle", "-₦1,200"),
           _buildTransaction("Wallet Funding", "+₦10,000"),

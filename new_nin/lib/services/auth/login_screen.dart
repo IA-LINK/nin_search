@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../screens/auth/register_screen.dart';
 import '../../services/auth/auth_service.dart';
 
@@ -12,14 +14,22 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final AuthService _auth = AuthService();
 
   bool loading = false;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   void loginUser() async {
     setState(() => loading = true);
 
-    final user = await _auth.login(
+    final auth = Provider.of<AuthService>(context, listen: false);
+
+    final user = await auth.login(
       emailController.text.trim(),
       passwordController.text.trim(),
     );
@@ -28,10 +38,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => loading = false);
 
-    if (user == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Login Failed")));
+    if (user != null) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Login Failed")),
+      );
     }
   }
 
@@ -69,7 +81,9 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const RegisterScreen(),
+                  ),
                 );
               },
               child: const Text("Create Account"),

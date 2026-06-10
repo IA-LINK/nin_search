@@ -7,40 +7,15 @@ class WalletService {
 
   String? get uid => _auth.currentUser?.uid;
 
-  // ================= USER CHECK =================
-
   void _requireUser() {
     if (uid == null) {
       throw Exception("User not logged in");
     }
   }
 
-  // ================= WALLET =================
-
-  Stream<double> balanceStream() {
-    _requireUser();
-
-    return _db.collection('users').doc(uid).snapshots().map((doc) {
-      final data = doc.data();
-
-      if (data == null) return 0.0;
-
-      final balance = data['balance'];
-
-      if (balance is int) {
-        return balance.toDouble();
-      }
-
-      if (balance is double) {
-        return balance;
-      }
-
-      return 0.0;
-    });
-  }
-
+  /// CREATE WALLET IF NOT EXISTS
   Future<void> createWallet() async {
-    _requireUser();
+    if (uid == null) return;
 
     final ref = _db.collection('users').doc(uid);
     final doc = await ref.get();
@@ -54,6 +29,28 @@ class WalletService {
     }
   }
 
+  /// REAL-TIME BALANCE STREAM (SAFE)
+  Stream<double> balanceStream() {
+    final userId = uid;
+
+    if (userId == null) {
+      return Stream.value(0.0);
+    }
+
+    return _db.collection('users').doc(userId).snapshots().map((doc) {
+      if (!doc.exists || doc.data() == null) return 0.0;
+
+      final data = doc.data()!;
+      final balance = data['balance'];
+
+      if (balance is int) return balance.toDouble();
+      if (balance is double) return balance;
+
+      return 0.0;
+    });
+  }
+
+  /// CREDIT WALLET
   Future<void> credit(double amount) async {
     _requireUser();
 
@@ -62,12 +59,8 @@ class WalletService {
     await _db.runTransaction((tx) async {
       final snap = await tx.get(ref);
 
-      if (!snap.exists) {
-        throw Exception("Wallet does not exist");
-      }
-
-      final data = snap.data()!;
-      final current = (data['balance'] ?? 0).toDouble();
+      final data = snap.data();
+      final current = (data?['balance'] ?? 0).toDouble();
 
       tx.update(ref, {
         'balance': current + amount,
@@ -75,6 +68,7 @@ class WalletService {
     });
   }
 
+  /// DEBIT WALLET
   Future<void> debit(double amount) async {
     _requireUser();
 
@@ -83,12 +77,8 @@ class WalletService {
     await _db.runTransaction((tx) async {
       final snap = await tx.get(ref);
 
-      if (!snap.exists) {
-        throw Exception("Wallet does not exist");
-      }
-
-      final data = snap.data()!;
-      final current = (data['balance'] ?? 0).toDouble();
+      final data = snap.data();
+      final current = (data?['balance'] ?? 0).toDouble();
 
       if (current < amount) {
         throw Exception("Insufficient balance");
@@ -100,8 +90,7 @@ class WalletService {
     });
   }
 
-  // ================= TRANSACTIONS =================
-
+  /// SAVE TRANSACTION
   Future<void> saveTransaction({
     required String type,
     required double amount,
@@ -109,8 +98,12 @@ class WalletService {
   }) async {
     _requireUser();
 
-    await _db.collection('transactions').add({
-      'uid': uid,
+    final ref = _db
+        .collection('users')
+        .doc(uid)
+        .collection('transactions');
+
+    await ref.add({
       'type': type,
       'amount': amount,
       'details': details,
@@ -118,13 +111,49 @@ class WalletService {
     });
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> transactionStream() {
-    _requireUser();
+Future<void> safeDebit(double amount) async {
+  final userId = uid;
+  if (userId == null) throw Exception("Not logged in");
+
+  final ref = _db.collection('users').doc(userId);
+
+  await _db.runTransaction((tx) async {
+    final snap = await tx.get(ref);
+
+    final data = snap.data();
+    final current = (data?['balance'] ?? 0).toDouble();
+
+    if (current < amount) {
+      throw Exception("Insufficient balance");
+    }
+
+    tx.update(ref, {
+      'balance': current - amount,
+    });
+  });
+}
+
+  /// TRANSACTION STREAM (SAFE + CLEAN)
+  Stream<List<Map<String, dynamic>>> transactionStream() {
+    final userId = uid;
+
+    if (userId == null) {
+      return Stream.value([]);
+    }
 
     return _db
+        .collection('users')
+        .doc(userId)
         .collection('transactions')
-        .where('uid', isEqualTo: uid)
         .orderBy('createdAt', descending: true)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return {
+          ...doc.data(),
+          'id': doc.id,
+        };
+      }).toList();
+    });
   }
 }

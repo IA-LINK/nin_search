@@ -1,18 +1,4 @@
 import 'package:flutter/material.dart';
-
-class AirtimeScreen extends StatelessWidget {
-  const AirtimeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Airtime')),
-      body: const Center(child: Text('Airtime Screen')),
-    );
-  }
-}
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/wallet_service.dart';
 
 class AirtimeScreen extends StatefulWidget {
