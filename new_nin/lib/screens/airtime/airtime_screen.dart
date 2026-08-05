@@ -38,6 +38,12 @@ class _AirtimeScreenState extends State<AirtimeScreen> {
         details: "$network - ${phoneController.text}",
       );
 
+      await engine.processAirtime(
+        phone: phone,
+        network: network,
+        amount: amount,
+        );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Airtime Purchase Successful")),
       );

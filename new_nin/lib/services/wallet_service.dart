@@ -133,6 +133,32 @@ Future<void> safeDebit(double amount) async {
   });
 }
 
+Future<void> fundWalletAfterVerification({
+  required double amount,
+  required String reference,
+}) async {
+  await credit(amount);
+
+  await saveTransaction(
+    type: "Wallet Funding",
+    amount: amount,
+    details: "Reference: $reference",
+  );
+}
+
+Future<void> suspendUser(String uid) async {
+  await _db.collection('users').doc(uid).update({
+    'status': 'suspended',
+  });
+}
+
+Future<void> activateUser(String uid) async {
+  await _db.collection('users').doc(uid).update({
+    'status': 'active',
+  });
+}
+
+
   /// TRANSACTION STREAM (SAFE + CLEAN)
   Stream<List<Map<String, dynamic>>> transactionStream() {
     final userId = uid;

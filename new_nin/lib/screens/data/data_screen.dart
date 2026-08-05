@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/vtu_engine.dart' show VtuEngine;
 import '../../services/wallet_service.dart';
 
 class DataScreen extends StatefulWidget {
@@ -44,6 +45,8 @@ class _DataScreenState extends State<DataScreen> {
 
     try {
       final wallet = context.read<WalletService>();
+      final engine = context.read<VtuEngine>();
+
 
       await wallet.debit(amount);
 
@@ -52,6 +55,13 @@ class _DataScreenState extends State<DataScreen> {
         amount: amount,
         details: "$network $plan to $phone",
       );
+
+      await engine.processData(
+        phone: phoneController.text,
+        network: network,
+        plan: plan,
+        amount: prices[plan]!,
+        );
 
       if (!mounted) return;
 

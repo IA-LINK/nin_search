@@ -12,6 +12,9 @@ import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/history/history_screen.dart';
 import 'screens/data/data_screen.dart';
 import 'screens/wallet/fund_wallet_screen.dart';
+import 'screens/admin/admin_dashboard.dart';
+import 'screens/admin/users_screen.dart';
+import 'screens/admin/transactions_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,8 +23,10 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    print("✅ Firebase initialized successfully");
   } catch (e) {
     debugPrint("Firebase init error: $e");
+    print("❌ Firebase initialization failed: $e");
   }
 
   runApp(const MyApp());
