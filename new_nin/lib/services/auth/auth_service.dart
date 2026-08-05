@@ -1,45 +1,57 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<User?> login(String email, String password) async {
-    try {
-      final credential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return credential.user;
-    } on FirebaseAuthException catch (e) {
-      print("Login error: ${e.message}");
-      return null;
-    } catch (e) {
-      print("Unknown login error: $e");
-      return null;
-    }
+  User? get currentUser => _auth.currentUser;
+
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  Future<UserCredential> register({
+    required String fullName,
+    required String email,
+    required String phone,
+    required String password,
+  }) async {
+    final credential =
+        await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+
+    final uid = credential.user!.uid;
+
+    await _firestore.collection('users').doc(uid).set({
+      'uid': uid,
+      'fullName': fullName,
+      'email': email,
+      'phone': phone,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    await _firestore.collection('wallets').doc(uid).set({
+      'uid': uid,
+      'balance': 0,
+      'currency': 'NGN',
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    return credential;
   }
 
-  Future<User?> register(String email, String password) async {
-    try {
-      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return credential.user;
-    } on FirebaseAuthException catch (e) {
-      print("Register error: ${e.message}");
-      return null;
-    } catch (e) {
-      print("Unknown register error: $e");
-      return null;
-    }
-  }
-
-  Future<void> signOut() async {
-    await _firebaseAuth.signOut();
+  Future<UserCredential> login({
+    required String email,
+    required String password,
+  }) async {
+    return await _auth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
   }
 
   Future<void> logout() async {
-    await signOut();
+    await _auth.signOut();
   }
 }
