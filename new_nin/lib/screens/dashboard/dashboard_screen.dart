@@ -1,147 +1,157 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../widgets/sidebar.dart';
-import '../../services/wallet_service.dart';
+import '../models/wallet_model.dart';
+import '../providers/auth_provider.dart';
+import '../providers/wallet_provider.dart';
+import '../widgets/wallet_card.dart';
+import 'fund_wallet_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final walletService = Provider.of<WalletService>(context);
+    final authProvider =
+        Provider.of<AuthProvider>(context, listen: false);
+
+    final walletProvider =
+        Provider.of<WalletProvider>(context, listen: false);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0B0B),
-      drawer: const Sidebar(),
-
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0B0B),
-        elevation: 0,
-        title: const Text(
-          "VTU Dashboard",
-          style: TextStyle(color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text("VTU Dashboard"),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await authProvider.authService.logout();
+            },
+          ),
+        ],
       ),
+      body: StreamBuilder<WalletModel>(
+        stream: walletProvider.walletService.walletStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(snapshot.error.toString()),
+            );
+          }
 
-          // ================= WALLET =================
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1A1A1A), Color(0xFF2C2C2C)],
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          if (!snapshot.hasData) {
+            return const Center(
+              child: Text("Wallet not found"),
+            );
+          }
 
-                const Text(
-                  "Wallet Balance",
-                  style: TextStyle(color: Colors.grey),
-                ),
+          final wallet = snapshot.data!;
 
-                const SizedBox(height: 10),
-
-                StreamBuilder<double>(
-                  stream: walletService.balanceStream(),
-                  builder: (context, snapshot) {
-                    final balance = snapshot.data ?? 0.0;
-
-                    return Text(
-                      "₦${balance.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 10),
-
-                const Text(
-                  "Active Account",
-                  style: TextStyle(color: Colors.green),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            "Quick Services",
-            style: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-
-          const SizedBox(height: 10),
-
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+          return ListView(
+            padding: const EdgeInsets.all(16),
             children: [
-              _buildService(Icons.phone_android, "Airtime"),
-              _buildService(Icons.wifi, "Data"),
-              _buildService(Icons.flash_on, "Electricity"),
-              _buildService(Icons.send, "Transfer"),
+              WalletCard(
+                balance: wallet.balance,
+              ),
+
+              const SizedBox(height: 25),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _actionButton(
+                    context,
+                    Icons.account_balance_wallet,
+                    "Fund",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FundWalletScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _actionButton(
+                    context,
+                    Icons.phone_android,
+                    "Airtime",
+                    () {},
+                  ),
+
+                  _actionButton(
+                    context,
+                    Icons.wifi,
+                    "Data",
+                    () {},
+                  ),
+
+                  _actionButton(
+                    context,
+                    Icons.receipt_long,
+                    "History",
+                    () {},
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 30),
+
+              const Text(
+                "Recent Transactions",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
+              const Card(
+                child: ListTile(
+                  leading: Icon(Icons.history),
+                  title: Text("No transactions yet"),
+                  subtitle: Text(
+                    "Your transactions will appear here",
+                  ),
+                ),
+              ),
             ],
-          ),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            "Recent Transactions",
-            style: TextStyle(color: Colors.white, fontSize: 18),
-          ),
-
-          const SizedBox(height: 10),
-
-          // TODO: Replace with Firebase Stream later
-          _buildTransaction("Airtime Purchase", "-₦500"),
-          _buildTransaction("Data Bundle", "-₦1,200"),
-          _buildTransaction("Wallet Funding", "+₦10,000"),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildService(IconData icon, String title) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 25,
-          backgroundColor: Colors.white10,
-          child: Icon(icon, color: Colors.white),
+  Widget _actionButton(
+    BuildContext context,
+    IconData icon,
+    String title,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              child: Icon(icon),
+            ),
+            const SizedBox(height: 8),
+            Text(title),
+          ],
         ),
-        const SizedBox(height: 5),
-        Text(title, style: const TextStyle(color: Colors.white, fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildTransaction(String title, String amount) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white10,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.white)),
-          Text(amount, style: const TextStyle(color: Colors.green)),
-        ],
       ),
     );
   }

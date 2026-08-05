@@ -15,6 +15,8 @@ import 'screens/wallet/fund_wallet_screen.dart';
 import 'screens/admin/admin_dashboard.dart';
 import 'screens/admin/users_screen.dart';
 import 'screens/admin/transactions_screen.dart';
+import 'screens/auth_gate.dart';
+import 'fund_wallet_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +49,7 @@ class MyApp extends StatelessWidget {
         title: 'VTU App',
 
         // Initial screen
-        home: const LoginScreen(),
+        home: const AuthGate(),
 
         routes: {
           '/login': (context) => const LoginScreen(),

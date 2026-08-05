@@ -1,185 +1,66 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/wallet_model.dart';
+
 class WalletService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  String? get uid => _auth.currentUser?.uid;
+  final FirebaseFirestore _firestore =
+      FirebaseFirestore.instance;
 
-  void _requireUser() {
-    if (uid == null) {
-      throw Exception("User not logged in");
-    }
-  }
+  final FirebaseAuth _auth =
+      FirebaseAuth.instance;
 
-  /// CREATE WALLET IF NOT EXISTS
-  Future<void> createWallet() async {
-    if (uid == null) return;
+  Stream<WalletModel> walletStream() {
 
-    final ref = _db.collection('users').doc(uid);
-    final doc = await ref.get();
+    final uid = _auth.currentUser!.uid;
 
-    if (!doc.exists) {
-      await ref.set({
-        'balance': 0.0,
-        'email': _auth.currentUser?.email ?? '',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-    }
-  }
-
-  /// REAL-TIME BALANCE STREAM (SAFE)
-  Stream<double> balanceStream() {
-    final userId = uid;
-
-    if (userId == null) {
-      return Stream.value(0.0);
-    }
-
-    return _db.collection('users').doc(userId).snapshots().map((doc) {
-      if (!doc.exists || doc.data() == null) return 0.0;
-
-      final data = doc.data()!;
-      final balance = data['balance'];
-
-      if (balance is int) return balance.toDouble();
-      if (balance is double) return balance;
-
-      return 0.0;
-    });
-  }
-
-  /// CREDIT WALLET
-  Future<void> credit(double amount) async {
-    _requireUser();
-
-    final ref = _db.collection('users').doc(uid);
-
-    await _db.runTransaction((tx) async {
-      final snap = await tx.get(ref);
-
-      final data = snap.data();
-      final current = (data?['balance'] ?? 0).toDouble();
-
-      tx.update(ref, {
-        'balance': current + amount,
-      });
-    });
-  }
-
-  /// DEBIT WALLET
-  Future<void> debit(double amount) async {
-    _requireUser();
-
-    final ref = _db.collection('users').doc(uid);
-
-    await _db.runTransaction((tx) async {
-      final snap = await tx.get(ref);
-
-      final data = snap.data();
-      final current = (data?['balance'] ?? 0).toDouble();
-
-      if (current < amount) {
-        throw Exception("Insufficient balance");
-      }
-
-      tx.update(ref, {
-        'balance': current - amount,
-      });
-    });
-  }
-
-  /// SAVE TRANSACTION
-  Future<void> saveTransaction({
-    required String type,
-    required double amount,
-    required String details,
-  }) async {
-    _requireUser();
-
-    final ref = _db
-        .collection('users')
+    return _firestore
+        .collection('wallets')
         .doc(uid)
-        .collection('transactions');
+        .snapshots()
+        .map((snapshot) {
 
-    await ref.add({
-      'type': type,
-      'amount': amount,
-      'details': details,
-      'createdAt': FieldValue.serverTimestamp(),
+      return WalletModel.fromMap(
+        snapshot.data()!,
+      );
     });
   }
 
-Future<void> safeDebit(double amount) async {
-  final userId = uid;
-  if (userId == null) throw Exception("Not logged in");
+  Future<void> debit(double amount) async {
+  final uid = _auth.currentUser!.uid;
 
-  final ref = _db.collection('users').doc(userId);
+  final walletRef = _firestore.collection('wallets').doc(uid);
 
-  await _db.runTransaction((tx) async {
-    final snap = await tx.get(ref);
+  await _firestore.runTransaction((transaction) async {
+    final snapshot = await transaction.get(walletRef);
 
-    final data = snap.data();
-    final current = (data?['balance'] ?? 0).toDouble();
+    final current = (snapshot['balance'] as num).toDouble();
 
     if (current < amount) {
       throw Exception("Insufficient balance");
     }
 
-    tx.update(ref, {
+    transaction.update(walletRef, {
       'balance': current - amount,
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   });
 }
-
-Future<void> fundWalletAfterVerification({
+Future<void> saveTransaction({
+  required String type,
   required double amount,
-  required String reference,
+  required String status,
 }) async {
-  await credit(amount);
+  final uid = _auth.currentUser!.uid;
 
-  await saveTransaction(
-    type: "Wallet Funding",
-    amount: amount,
-    details: "Reference: $reference",
-  );
-}
-
-Future<void> suspendUser(String uid) async {
-  await _db.collection('users').doc(uid).update({
-    'status': 'suspended',
+  await _firestore.collection('transactions').add({
+    'uid': uid,
+    'type': type,
+    'amount': amount,
+    'status': status,
+    'createdAt': FieldValue.serverTimestamp(),
   });
 }
 
-Future<void> activateUser(String uid) async {
-  await _db.collection('users').doc(uid).update({
-    'status': 'active',
-  });
-}
-
-
-  /// TRANSACTION STREAM (SAFE + CLEAN)
-  Stream<List<Map<String, dynamic>>> transactionStream() {
-    final userId = uid;
-
-    if (userId == null) {
-      return Stream.value([]);
-    }
-
-    return _db
-        .collection('users')
-        .doc(userId)
-        .collection('transactions')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return {
-          ...doc.data(),
-          'id': doc.id,
-        };
-      }).toList();
-    });
-  }
 }
